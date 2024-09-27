@@ -1,5 +1,6 @@
 import { relations, sql } from "drizzle-orm";
 import {
+  date,
   index,
   integer,
   pgTableCreator,
@@ -19,25 +20,43 @@ import { type AdapterAccount } from "next-auth/adapters";
  */
 export const createTable = pgTableCreator((name) => `morgen_${name}`);
 
-export const posts = createTable(
-  "post",
+export const lists = createTable("list", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 256 }).notNull(),
+  color: varchar("color", { length: 256 }).notNull(),
+  createdById: varchar("created_by", { length: 255 })
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(() => new Date()),
+});
+
+export const tasks = createTable(
+  "task",
   {
     id: serial("id").primaryKey(),
-    name: varchar("name", { length: 256 }),
+    title: varchar("name", { length: 256 }),
+    notes: text("notes"),
+    listId: integer("list_id").references(() => lists.id),
+    priority: varchar("priority", { length: 50 }),
+    estimate: varchar("estimate", { length: 50 }),
+    duedate: date("duedate", { mode: "string" }),
+
     createdById: varchar("created_by", { length: 255 })
       .notNull()
       .references(() => users.id),
     createdAt: timestamp("created_at", { withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(
-      () => new Date()
-    ),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(() => new Date()),
   },
-  (example) => ({
-    createdByIdIdx: index("created_by_idx").on(example.createdById),
-    nameIndex: index("name_idx").on(example.name),
-  })
+  (t) => {
+    return {
+      listIdx: index("listIdx").on(t.listId),
+    };
+  },
 );
 
 export const users = createTable("user", {
@@ -64,9 +83,7 @@ export const accounts = createTable(
     userId: varchar("user_id", { length: 255 })
       .notNull()
       .references(() => users.id),
-    type: varchar("type", { length: 255 })
-      .$type<AdapterAccount["type"]>()
-      .notNull(),
+    type: varchar("type", { length: 255 }).$type<AdapterAccount["type"]>().notNull(),
     provider: varchar("provider", { length: 255 }).notNull(),
     providerAccountId: varchar("provider_account_id", {
       length: 255,
@@ -84,7 +101,7 @@ export const accounts = createTable(
       columns: [account.provider, account.providerAccountId],
     }),
     userIdIdx: index("account_user_id_idx").on(account.userId),
-  })
+  }),
 );
 
 export const accountsRelations = relations(accounts, ({ one }) => ({
@@ -94,9 +111,7 @@ export const accountsRelations = relations(accounts, ({ one }) => ({
 export const sessions = createTable(
   "session",
   {
-    sessionToken: varchar("session_token", { length: 255 })
-      .notNull()
-      .primaryKey(),
+    sessionToken: varchar("session_token", { length: 255 }).notNull().primaryKey(),
     userId: varchar("user_id", { length: 255 })
       .notNull()
       .references(() => users.id),
@@ -107,7 +122,7 @@ export const sessions = createTable(
   },
   (session) => ({
     userIdIdx: index("session_user_id_idx").on(session.userId),
-  })
+  }),
 );
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
@@ -126,5 +141,10 @@ export const verificationTokens = createTable(
   },
   (vt) => ({
     compoundKey: primaryKey({ columns: [vt.identifier, vt.token] }),
-  })
+  }),
 );
+
+// Define Relationships
+export const listRelations = relations(lists, ({ many }) => ({
+  tasks: many(tasks),
+}));
