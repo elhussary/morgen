@@ -2,13 +2,13 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { lists, tasks } from "~/server/db/schema";
+import { lists } from "~/server/db/schema";
 
 export const listRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
       z.object({
-        title: z.string().min(1).max(256),
+        title: z.string().min(1, { message: "Please add a list name" }).max(256),
         color: z.string().min(1).max(256),
       }),
     )
@@ -30,7 +30,6 @@ export const listRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { id, ...updateData } = input;
-
       await ctx.db.update(lists).set(updateData).where(eq(lists.id, id));
     }),
 

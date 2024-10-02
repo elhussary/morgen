@@ -33,31 +33,23 @@ export const lists = createTable("list", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(() => new Date()),
 });
 
-export const tasks = createTable(
-  "task",
-  {
-    id: serial("id").primaryKey(),
-    title: varchar("name", { length: 256 }),
-    notes: text("notes"),
-    listId: integer("list_id").references(() => lists.id),
-    priority: varchar("priority", { length: 50 }),
-    estimate: varchar("estimate", { length: 50 }),
-    duedate: date("duedate", { mode: "string" }),
+export const tasks = createTable("task", {
+  id: serial("id").primaryKey(),
+  title: varchar("name", { length: 256 }),
+  notes: text("notes"),
+  listId: integer("list_id").references(() => lists.id),
+  priority: varchar("priority", { length: 50 }),
+  estimate: varchar("estimate", { length: 50 }),
+  duedate: date("duedate", { mode: "string" }),
 
-    createdById: varchar("created_by", { length: 255 })
-      .notNull()
-      .references(() => users.id),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(() => new Date()),
-  },
-  (t) => {
-    return {
-      listIdx: index("listIdx").on(t.listId),
-    };
-  },
-);
+  createdById: varchar("created_by", { length: 255 })
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(() => new Date()),
+});
 
 export const users = createTable("user", {
   id: varchar("id", { length: 255 })

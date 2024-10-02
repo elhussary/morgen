@@ -104,7 +104,7 @@ export default function Calendar() {
 
               <AccordionTrigger className="cursor-default hover:no-underline">
                 <div className="flex items-center gap-2">
-                  <p className={`h-2.5 w-2.5 rounded-full border border-[${list.color}]`}></p>
+                  <p className="h-2.5 w-2.5 rounded-full border" style={{ borderColor: list.color }}></p>
                   {list.title}
                 </div>
               </AccordionTrigger>
